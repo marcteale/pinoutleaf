@@ -1,0 +1,90 @@
+<html lang="en">
+<head>
+    <title>Pinout Leaf Editor</title>
+    <script type="module" src="dist/web.js"></script>
+    <script>
+        new EventSource('/esbuild').addEventListener('change', () => location.reload());
+    </script>
+    <link rel="icon"
+          href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E🌿%3C/text%3E%3C/svg%3E">
+    <link type="text/css" rel="stylesheet" href="editor.css">
+
+</head>
+<body>
+
+<div class="editor">
+    <div class="panel panel-editor">
+        <div id="editor"></div>
+        <p>
+            <label for="example-select">Load an existing definition:</label>
+            <select name="examples" id="example-select">
+                <option value="">pick a board</option>
+            </select>
+        </p>
+
+
+        <p>
+            <b>Learn more</b> about the tool and available config options in the
+            <a href="https://github.com/splitbrain/pinoutleaf">Github Repository</a>.
+        </p>
+    </div>
+    <div class="panel panel-output">
+        <div id="output"></div>
+
+        <p>
+            ☝️ Click the images to download.
+            <a href="javascript:print()">🖨️ Click here to print them</a>.
+        </p>
+    </div>
+</div>
+
+
+<p>
+    <small>A tool made by <a href="https://www.splitbrain.org">splitbrain</a></small>
+</p>
+
+
+<script>
+    // load existing definitions
+    document.addEventListener('DOMContentLoaded', () => {
+        const selectElement = document.getElementById('example-select');
+
+        fetch('index.json')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Sort examples alphabetically by title
+                const sortedExamples = Object.entries(data).sort(([, titleA], [, titleB]) =>
+                    titleA.localeCompare(titleB)
+                );
+
+                sortedExamples.forEach(([path, title]) => {
+                    const option = document.createElement('option');
+                    option.value = path;
+                    option.textContent = title;
+                    selectElement.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('Error loading or parsing index.json:', error);
+                // Optionally disable the select or show an error message
+                selectElement.disabled = true;
+                const errorOption = document.createElement('option');
+                errorOption.textContent = 'Error loading examples';
+                selectElement.appendChild(errorOption);
+            });
+
+        selectElement.addEventListener('change', (event) => {
+            const selectedPath = event.target.value;
+            if (selectedPath) {
+                window.location.search = `?load=${encodeURIComponent(selectedPath)}`;
+            }
+        });
+    });
+</script>
+</body>
+</html>
